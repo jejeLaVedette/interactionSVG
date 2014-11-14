@@ -8,7 +8,7 @@ define    ( [
 	console.log("---> Start");
     svg= document.querySelector("svg");
 
-    var E = document.querySelectorAll("svg .déplaçable");
+    var E = document.querySelectorAll("svg .deplacable");
     for(var i=0;i<E.length;i++){
         E.item(i).addEventListener("touchstart", function (event){
             console.log("touchStart event "+this.id);
@@ -16,7 +16,7 @@ define    ( [
             onStart(event);
 
         },false);
-        E.addEventListener("touchmove", function (event){
+        E.item(i).addEventListener("touchmove", function (event){
             console.log("touchMove event "+this.id);
             event.preventDefault();
             onMove(event);
@@ -48,7 +48,7 @@ define    ( [
 		for(var i = 0; i < L.length; i++){
 			var touch = L.item(i);
 			var id = touch.identifier;
-			var newP = SVGRoot.createSVGPoint();
+			var newP = svg.createSVGPoint();
 			newP.x = touch.pageX;
 			newP.y = touch.pageY;
 			newP = newP.matrixTransform(elem.getCTM().inverse());
