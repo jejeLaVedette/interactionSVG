@@ -3,8 +3,17 @@ define    ( [
         , function(ALX_magictouch) {
     // Coder ici les interactions de translation et de transformation affine
 
+    /***********************************************************************************/
     /*Code realiser avec l'aide du binome FREBY-LABAT, il y aura donc des ressemblances*/
+    /***********************************************************************************/
+
+    
 	console.log("---> Start");
+    
+    //supprimer le point
+    document.addEventListener("touchend", function (event){
+		delete(StocktElem[event.changedTouches.item(0).identifier]);
+    }, false);
     
     //balise svg du html
     svg= document.querySelector("svg");
@@ -21,8 +30,14 @@ define    ( [
         },false);
         E.item(i).addEventListener("touchmove", function (event){
             console.log("touchMove event "+this.id);
-            event.preventDefault();
-            onMove(event);
+           //en fonction du nombre de point on change de methode move
+            var nbPoint=0;
+            for(myObj in StockElem){
+                if(event.changedTouches.item(0).target.id == StockElem[myObj].obj.id) nbPoint++;
+            }
+            console.log("nbPoint :"+nbPoint);
+            if(nbPoint===1) onMove(event);
+            else if(nbPoint === 2) onRotoZoom(event);
         },false);
     }
 
@@ -67,12 +82,80 @@ define    ( [
             var e = coordonneesRelativeAParent.x - M.a*coordonnees.x - M.c *coordonnees.y;
             var f = coordonneesRelativeAParent.y - M.b*coordonnees.x - M.d *coordonnees.y;
             // Affecter la matrice de transformtion
-            elem.setAttribute('transform', 'matrix('+M.a+','+M.b+','+M.c+','+M.d+','+e+','+f+')' );
-               
+            elem.setAttribute('transform', 'matrix('+M.a+','+M.b+','+M.c+','+M.d+','+e+','+f+')' );      
         }
-    
     }
     
-    
-    
+    //ici on sait que l on a que deux points sur l objet courrant
+    function onRotoZoom(e){
+        console.log("in onMoveRotation");
+        var L = e.changedTouches;
+        
+        var dx1; //=P1.x - P2.x
+        var dx2; //=P1'.x - P2'.x
+        var dy1; //=P1.y - P2.y
+        var dy2; //=P1'.y - P2'.y
+        var s;
+        var c;
+        
+        for(var i = 0; i < L.length; i++){
+            var pts = L.item(i);
+            var pts2;
+            for(myObj in StockElem){
+                if((event.changedTouches.item(0).target.id == StockElem[myObj].obj.id)&&(event.changedTouches.item(0).target!=pts)) {
+                    pts2=StockElem[myObj].obj;
+                    console.log("pts2 :"+pts2);
+                }
+            }
+            
+            var elem = StockElem[pts.identifier].obj;
+
+            //P1
+            var coordonnees1 = StockElem[pts.identifier].coordonnees;
+            //P2
+            var coordonnees2 = StockElem[pts2.identifier].coordonnees;
+            
+             //déplacer le dessin
+            var pt = svg.createSVGPoint();
+            pt.x = pts.pageX;
+            pt.y = pts.pageY;
+            // Coordonnées du pointeur par rapport au parent de l'élément à déplacer
+            var parent1 = StockElem[pts.identifier].parent;
+            var parent2 = StockElem[pts2.identifier].parent;
+            
+            //P1'
+            coordonneesRelativeAParent1 = pt.matrixTransform(parent1.getCTM().inverse());
+            //P2'
+            coordonneesRelativeAParent2 = pt.matrixTransform(parent2.getCTM().inverse());
+            
+            dx1 = coordonnees1.x - coordonnees2.x;
+            dx2 = coordonneesRelativeAParent1.x - coordonneesRelativeAParent2.x;
+            dy1 = coordonnees1.y - coordonnees2.y;
+            dy2 = coordonneesRelativeAParent1.y - coordonneesRelativeAParent2.y;
+
+            //si les points ne se confondent pas
+            if(! ((dx1===0) && (dy1===0)) ){
+                if((dx1===0)&&(dy1!=dx1)){
+                    s = -dx2/dy1;
+                    c = dy2/dy1;
+                }
+                else if((dx1!=0)&&(dy1===0)){
+                    s = dy2/dx1;
+                    c = dx2/dx1;
+                }
+                else if((dx1!=0) && (dy1!=0)){
+                    s = (dy2/dy1 - dx2-dx1) / (dy1/dx1 + dx1/dy1);
+                    c = (dy2 - s*dx1) / dy1;
+                }
+            }
+            
+            var e = coordonneesRelativeAParent1.x - c*coordonnees1.x + s*coordonnees1.y;
+            var f = coordonneesRelativeAParent1.y - s*coordonnees1.x + c*coordonnees1.y;
+            
+            elem.setAttribute('transform', 'matrix('+M.a+','+M.b+','+M.c+','+M.d+','+e+','+f+')' );      
+
+            
+        }
+        
+    }
 });
