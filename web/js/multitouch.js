@@ -63,6 +63,7 @@ define    ( [
         var L = e.changedTouches;
         for(var i = 0; i < L.length; i++){
             var pts = L.item(i);
+            
             //verifie que le point n'est pas null
             if(typeof StockElem[pts.identifier] === "undefined") {continue;}
             
@@ -103,7 +104,7 @@ define    ( [
             var pts2;
             for(myObj in StockElem){
                 if((event.changedTouches.item(0).target.id == StockElem[myObj].obj.id)&&(event.changedTouches.item(0).target!=pts)) {
-                    pts2=StockElem[myObj].obj;
+                    pts2=L.item(i);
                     console.log("pts2 :"+pts2);
                 }
             }
@@ -149,6 +150,7 @@ define    ( [
                 }
             }
             
+            var M = StockElem[pts.identifier].matrice;
             var e = coordonneesRelativeAParent1.x - c*coordonnees1.x + s*coordonnees1.y;
             var f = coordonneesRelativeAParent1.y - s*coordonnees1.x + c*coordonnees1.y;
             
