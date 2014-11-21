@@ -12,7 +12,7 @@ define    ( [
     
     //supprimer le point
     document.addEventListener("touchend", function (event){
-		delete(StocktElem[event.changedTouches.item(0).identifier]);
+		delete(StockElem[event.changedTouches.item(0).identifier]);
     }, false);
     
     //balise svg du html
@@ -104,7 +104,7 @@ define    ( [
             var pts2;
             for(myObj in StockElem){
                 if((event.changedTouches.item(0).target.id == StockElem[myObj].obj.id)&&(event.changedTouches.item(0).target!=pts)) {
-                    pts2=L.item(i);
+                    pts2=myObj;
                     console.log("pts2 :"+pts2);
                 }
             }
@@ -114,7 +114,7 @@ define    ( [
             //P1
             var coordonnees1 = StockElem[pts.identifier].coordonnees;
             //P2
-            var coordonnees2 = StockElem[pts2.identifier].coordonnees;
+            var coordonnees2 = StockElem[pts2].coordonnees;
             
              //déplacer le dessin
             var pt = svg.createSVGPoint();
@@ -122,7 +122,7 @@ define    ( [
             pt.y = pts.pageY;
             // Coordonnées du pointeur par rapport au parent de l'élément à déplacer
             var parent1 = StockElem[pts.identifier].parent;
-            var parent2 = StockElem[pts2.identifier].parent;
+            var parent2 = StockElem[pts2].parent;
             
             //P1'
             coordonneesRelativeAParent1 = pt.matrixTransform(parent1.getCTM().inverse());
@@ -130,34 +130,53 @@ define    ( [
             coordonneesRelativeAParent2 = pt.matrixTransform(parent2.getCTM().inverse());
             
             dx1 = coordonnees1.x - coordonnees2.x;
+            console.log("coordonnees1.x :"+coordonnees1.x);
+            console.log("coordonnees2.x :"+coordonnees2.x);
+            if(dx1<0) dx1 = -dx1;
+            console.log("dx1 :"+dx1);
             dx2 = coordonneesRelativeAParent1.x - coordonneesRelativeAParent2.x;
+            if(dx2<0) dx2 = -dx2;
+            console.log("dx2 :"+dx2);
             dy1 = coordonnees1.y - coordonnees2.y;
+            if(dy1<0) dy1 = -dy1
+            console.log("dy1 :"+dy1);
             dy2 = coordonneesRelativeAParent1.y - coordonneesRelativeAParent2.y;
+            if(dy2<0) dy2 = -dy2;
+            console.log("dy2 :"+dy2);
 
             //si les points ne se confondent pas
-            if(! ((dx1===0) && (dy1===0)) ){
+            if((dx1!==0) && (dy1!==0)){
+                console.log("1");
                 if((dx1===0)&&(dy1!=dx1)){
+                    console.log("2");
                     s = -dx2/dy1;
                     c = dy2/dy1;
+                    console.log("s :" +s);
+                    console.log("c :"+c);
                 }
                 else if((dx1!=0)&&(dy1===0)){
+                    console.log("3");
                     s = dy2/dx1;
                     c = dx2/dx1;
+                    console.log("s :" +s);
+                    console.log("c :"+c);
                 }
                 else if((dx1!=0) && (dy1!=0)){
-                    s = (dy2/dy1 - dx2-dx1) / (dy1/dx1 + dx1/dy1);
+                    console.log("4");
+                    s = (dy2/dy1 - dx2/dx1) / (dy1/dx1 + dx1/dy1);
                     c = (dy2 - s*dx1) / dy1;
+                    console.log("s :" +s);
+                    console.log("c :"+c);
                 }
             }
             
             var M = StockElem[pts.identifier].matrice;
             var e = coordonneesRelativeAParent1.x - c*coordonnees1.x + s*coordonnees1.y;
+            console.log("e :"+e);
             var f = coordonneesRelativeAParent1.y - s*coordonnees1.x + c*coordonnees1.y;
+            console.log("f :"+f);
             
             elem.setAttribute('transform', 'matrix('+M.a+','+M.b+','+M.c+','+M.d+','+e+','+f+')' );      
-
-            
         }
-        
     }
 });
