@@ -102,7 +102,7 @@ define    ( [
         
         for(var i = 0; i < L.length; i++){
             var pts = L.item(i);
-            var tab = new Array;
+            var tab = Array;
             var j = 0;
             var indice;
 
