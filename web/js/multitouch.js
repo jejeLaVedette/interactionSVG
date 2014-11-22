@@ -19,6 +19,7 @@ define    ( [
     svg= document.querySelector("svg");
     
     var StockElem = {};
+    var coordonneesRelativeAParent;
     
     //objet html deplacable
     var E = document.querySelectorAll("svg .deplacable");
@@ -101,28 +102,31 @@ define    ( [
         
         for(var i = 0; i < L.length; i++){
             var pts = L.item(i);
-            var pts2;
-            for(myObj in StockElem){
-                if((event.changedTouches.item(0).target.id == StockElem[myObj].obj.id)&&(event.changedTouches.item(0).target!=pts)) {
-                    pts2=myObj;
-                    console.log("pts2 :"+pts2);
+            var tab = new Array;
+            var j = 0;
+
+            for(indice in StockElem){
+                var myObject = StockElem[indice];
+                if((event.changedTouches.item(0).target.id == myObject.obj.id)&&(j<2)) {
+                    tab[j] = myObject;
+                    j++;
                 }
             }
             
             var elem = StockElem[pts.identifier].obj;
 
             //P1
-            var coordonnees1 = StockElem[pts.identifier].coordonnees;
+            var coordonnees1 = tab[0].coordonnees;
             //P2
-            var coordonnees2 = StockElem[pts2].coordonnees;
+            var coordonnees2 = tab[1].coordonnees;
             
              //déplacer le dessin
             var pt = svg.createSVGPoint();
             pt.x = pts.pageX;
             pt.y = pts.pageY;
             // Coordonnées du pointeur par rapport au parent de l'élément à déplacer
-            var parent1 = StockElem[pts.identifier].parent;
-            var parent2 = StockElem[pts2].parent;
+            var parent1 = tab[0].parent;
+            var parent2 = tab[1].parent;
             
             //P1'
             coordonneesRelativeAParent1 = pt.matrixTransform(parent1.getCTM().inverse());
@@ -132,20 +136,20 @@ define    ( [
             dx1 = coordonnees1.x - coordonnees2.x;
             console.log("coordonnees1.x :"+coordonnees1.x);
             console.log("coordonnees2.x :"+coordonnees2.x);
-            if(dx1<0) dx1 = -dx1;
-            console.log("dx1 :"+dx1);
+            if(dx1<0) dx1 = (-1)*dx1;
+
             dx2 = coordonneesRelativeAParent1.x - coordonneesRelativeAParent2.x;
-            if(dx2<0) dx2 = -dx2;
-            console.log("dx2 :"+dx2);
+            if(dx2<0) dx2 = (-1)*dx2;
+
             dy1 = coordonnees1.y - coordonnees2.y;
-            if(dy1<0) dy1 = -dy1
-            console.log("dy1 :"+dy1);
+            if(dy1<0) dy1 = (-1)*dy1;
+
             dy2 = coordonneesRelativeAParent1.y - coordonneesRelativeAParent2.y;
-            if(dy2<0) dy2 = -dy2;
-            console.log("dy2 :"+dy2);
+            if(dy2<0) dy2 = (-1)*dy2;
+
 
             //si les points ne se confondent pas
-            if((dx1!==0) && (dy1!==0)){
+            if((dx1!==0) || (dy1!==0)){
                 console.log("1");
                 if((dx1===0)&&(dy1!=dx1)){
                     console.log("2");
