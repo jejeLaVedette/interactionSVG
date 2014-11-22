@@ -60,8 +60,8 @@ define    ( [
 		}
     }
     
-    function onMove(e){
-        var L = e.changedTouches;
+    function onMove(evt){
+        var L = evt.changedTouches;
         for(var i = 0; i < L.length; i++){
             var pts = L.item(i);
             
@@ -89,9 +89,9 @@ define    ( [
     }
     
     //ici on sait que l on a que deux points sur l objet courrant
-    function onRotoZoom(e){
+    function onRotoZoom(evt){
         console.log("in onMoveRotation");
-        var L = e.changedTouches;
+        var L = evt.changedTouches;
         
         var dx1; //=P1.x - P2.x
         var dx2; //=P1'.x - P2'.x
@@ -104,6 +104,7 @@ define    ( [
             var pts = L.item(i);
             var tab = new Array;
             var j = 0;
+            var indice;
 
             for(indice in StockElem){
                 var myObject = StockElem[indice];
