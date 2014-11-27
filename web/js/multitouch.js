@@ -112,6 +112,8 @@ define    ( [
         }
     }
     
+    
+    
     function onMove(evt){
         var L = evt.changedTouches;
         for(var i = 0; i < L.length; i++){
@@ -167,16 +169,16 @@ define    ( [
             pt.y = pts.pageY;
             
             var parent = StockElem[pts.identifier].parent;
-            coordonneesRelativeAParent = pt.matrixTransform(parent.getCTM().inverse());
-             point_prime = pt.matrixTransform(parent.getCTM().inverse());	
             
+            point_prime = pt.matrixTransform(parent.getCTM().inverse());	
             
-				if(pt.identifier === StockElem[pts.identifier].idpoint1){
-					StockElem[pts.identifier].p1_prime = point_prime;
-					
-				}else{
-					StockElem[pts.identifier].p2_prime = point_prime;
-				}
+            //MAJ
+            if(pt.identifier === StockElem[pts.identifier].idpoint1){
+                StockElem[pts.identifier].p1_prime = point_prime;
+
+            }else{
+                StockElem[pts.identifier].p2_prime = point_prime;
+            }
             
             
             coordonnees1=StockElem[pts.identifier].cp;
@@ -185,48 +187,37 @@ define    ( [
             coordonnes2Prime=StockElem[pts.identifier].p2_prime;
             
             dx1 = coordonnees1.x - coordonnees2.x;
-            if(dx1<0) dx1 = (-1)*dx1;
-            console.log("dx1 ="+dx1);
             dx2 = coordonnes1Prime.x - coordonnes2Prime.x;
-            if(dx2<0) dx2 = (-1)*dx2;
-            console.log("dx2 ="+dx2);
             dy1 = coordonnees1.y - coordonnees2.y;
-            if(dy1<0) dy1 = (-1)*dy1;
-            console.log("dy1 ="+dy1);
             dy2 = coordonnes1Prime.y - coordonnes2Prime.y;
-            if(dy2<0) dy2 = (-1)*dy2;
-            console.log("dy2 ="+dy2);
 
             //si les points ne se confondent pas
             if((dx1!==0) && (dy1!==0)){
                 console.log("1");
-                if((dx1===0)&&(dy1!=0)){
+                if((dx1===0)&&(dy1!==0)){
                     console.log("2");
                     s = (-dx2)/dy1;
                     c = dy2/dy1;
-                    console.log("s :" +s);
-                    console.log("c :"+c);
                 }
                 else if((dx1!=0)&&(dy1===0)){
                     console.log("3");
                     s = dy2/dx1;
                     c = dx2/dx1;
-                    console.log("s :" +s);
-                    console.log("c :"+c);
                 }
                 else if((dx1!=0) && (dy1!=0)){
                     console.log("4");
                     s = (dy2/dy1 - dx2/dx1) / (dy1/dx1 + dx1/dy1);
-                    c = (dx2+s*dy1)/dx1;;
+                    //c = (dx2 + s*dy1) / dx1;
+                    c = (dy2 - s*dx1)/dy1; 
+                }
                     console.log("s :" +s);
                     console.log("c :"+c);
-                }
             }
             
-            var M = StockElem[pts.identifier].matrice;
+            //var M = StockElem[pts.identifier].matrice;
             var e = coordonnes1Prime.x - c*coordonnees1.x + s*coordonnees1.y;
             console.log("e :"+e);
-            var f = coordonnes1Prime.y - s*coordonnees1.x + c*coordonnees1.y;
+            var f = coordonnes1Prime.y - s*coordonnees1.x - c*coordonnees1.y;
             console.log("f :"+f);
             
             elem.setAttribute('transform', 'matrix('+c+','+s+','+(-s)+','+c+','+e+','+f+')' );      
