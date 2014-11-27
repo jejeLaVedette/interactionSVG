@@ -43,10 +43,10 @@ define    ( [
     }
 
 
-    function onStart(e,obj){
+    //function onStart(e,obj){
         /* enregistrement, lors du touchstart, la correspondance entre l'identifiant du touch et l'élement touché, ainsi que des infos
         complémentaires... */
-        var L = e.changedTouches;
+        /*var L = e.changedTouches;
 		for(var i = 0; i < L.length; i++){
 			var touch = L.item(i);
 			var id = touch.identifier;
@@ -55,9 +55,61 @@ define    ( [
 			newP.y = touch.pageY;
 			newP = newP.matrixTransform(obj.getCTM().inverse());
             var MyMatrice =obj.parentElement.getCTM().inverse().multiply(obj.getCTM());
+            
+            // On calcul pt_prime, point correspondant au touch dans le repère parent
+            var pt_prime = svg.createSVGPoint();
+            pt_prime.x = touch.pageX;
+            pt_prime.y = touch.pageY;
+            pt_prime = pt_prime.matrixTransform(obj.parentElement.getCTM().inverse());
 
-			StockElem[id] = {coordonnees : newP, obj : obj, parent : obj.parentElement, matrice : MyMatrice};
+            StockElem[id] = {coordonnees : newP, obj : obj, parent : obj.parentElement, matrice : MyMatrice, pt_prime:pt_prime};
 		}
+        
+        //rajouter transfo par rap element et parent
+        //deuxieme clique : verif si deja pointeur sur l elem
+        //--> on modif la struc du 1 pts pour rajouter dans le deuxieme point
+        //--> le deuxieme points aura la mm structure que le permier point
+    }*/
+    
+    function onStart(e, elem){
+        var L = e.changedTouches;
+        for(var i = 0; i < L.length; i++){
+            var touch = L.item(i); 
+            var id = touch.identifier;
+            var newP = svg.createSVGPoint();
+            newP.x = touch.pageX;
+            newP.y = touch.pageY;
+            var coordonneesRelativeAParent = newP.matrixTransform(elem.getCTM().inverse());
+			var p_prime = newP.matrixTransform(elem.parentElement.getCTM().inverse());
+            var M = elem.parentElement.getCTM().inverse().multiply(elem.getCTM());
+			
+			
+			//debut modif
+			var nbrElement = 0;
+			var lastId;
+        	for(valeur in StockElem){
+				if(touch.target.id == StockElem[valeur].obj.id){
+					nbrElement++;
+					lastId = StockElem[valeur].idpoint1;
+				}
+			}
+            
+            //deuxieme clique : verif si deja pointeur sur l elem
+            //--> on modif la struc du 1 pts pour rajouter dans le deuxieme point
+            //--> le deuxieme points aura la mm structure que le permier point
+            
+			//si premier clique
+			if(nbrElement === 0){
+				StockElem[id] = {cp : coordonneesRelativeAParent, obj : elem, matrice : M,parent : elem.parentElement, p1_prime : p_prime, idpoint1 :  id}; 
+			} else if(nbrElement === 1){ //deuxieme clique
+				StockElem[lastId].cp2 = coordonneesRelativeAParent;
+				StockElem[lastId].p2_prime = p_prime;
+				StockElem[lastId].idpoint2 = id;
+				StockElem[id] = StockElem[lastId];
+			}else{
+				continue;
+			}
+        }
     }
     
     function onMove(evt){
@@ -69,28 +121,31 @@ define    ( [
             if(typeof StockElem[pts.identifier] === "undefined") {continue;}
             
             var elem = StockElem[pts.identifier].obj;
-            var coordonnees = StockElem[pts.identifier].coordonnees;
+            var coordonneesP = StockElem[pts.identifier].cp;
             
             //déplacer le dessin
             var pt = svg.createSVGPoint();
             pt.x = pts.pageX;
             pt.y = pts.pageY;
-            // Coordonnées du pointeur par rapport au parent de l'élément à déplacer
+            // Coordonnées du pointeur par rapport au parent 
             var parent = StockElem[pts.identifier].parent;
             coordonneesRelativeAParent = pt.matrixTransform(parent.getCTM().inverse());
 
             // Résoud l'équation
             var M = StockElem[pts.identifier].matrice;
-            var e = coordonneesRelativeAParent.x - M.a*coordonnees.x - M.c *coordonnees.y;
-            var f = coordonneesRelativeAParent.y - M.b*coordonnees.x - M.d *coordonnees.y;
+            var e = coordonneesRelativeAParent.x - M.a*coordonneesP.x - M.c *coordonneesP.y;
+            var f = coordonneesRelativeAParent.y - M.b*coordonneesP.x - M.d *coordonneesP.y;
             // Affecter la matrice de transformtion
             elem.setAttribute('transform', 'matrix('+M.a+','+M.b+','+M.c+','+M.d+','+e+','+f+')' );      
+            
+            StockElem[pts.identifier].p1_prime = pt.matrixTransform(elem.parentElement.getCTM().inverse());
+
         }
     }
     
     //ici on sait que l on a que deux points sur l objet courrant
     function onRotoZoom(evt){
-        console.log("in onMoveRotation");
+        console.log("in onRotoRotation");
         var L = evt.changedTouches;
         
         var dx1; //=P1.x - P2.x
@@ -102,59 +157,52 @@ define    ( [
         
         for(var i = 0; i < L.length; i++){
             var pts = L.item(i);
-            var tab = Array;
-            var j = 0;
-            var indice;
-
-            for(indice in StockElem){
-                var myObject = StockElem[indice];
-                if((event.changedTouches.item(0).target.id == myObject.obj.id)&&(j<2)) {
-                    tab[j] = myObject;
-                    j++;
-                }
-            }
-            
+            if(typeof StockElem[pts.identifier] === "undefined") 
+					continue;
             var elem = StockElem[pts.identifier].obj;
-
-            //P1
-            var coordonnees1 = tab[0].coordonnees;
-            //P2
-            var coordonnees2 = tab[1].coordonnees;
             
              //déplacer le dessin
             var pt = svg.createSVGPoint();
             pt.x = pts.pageX;
             pt.y = pts.pageY;
-            // Coordonnées du pointeur par rapport au parent de l'élément à déplacer
-            var parent1 = tab[0].parent;
-            var parent2 = tab[1].parent;
             
-            //P1'
-            coordonneesRelativeAParent1 = pt.matrixTransform(parent1.getCTM().inverse());
-            //P2'
-            coordonneesRelativeAParent2 = pt.matrixTransform(parent2.getCTM().inverse());
+            var parent = StockElem[pts.identifier].parent;
+            coordonneesRelativeAParent = pt.matrixTransform(parent.getCTM().inverse());
+             point_prime = pt.matrixTransform(parent.getCTM().inverse());	
+            
+            
+				if(pt.identifier === StockElem[pts.identifier].idpoint1){
+					StockElem[pts.identifier].p1_prime = point_prime;
+					
+				}else{
+					StockElem[pts.identifier].p2_prime = point_prime;
+				}
+            
+            
+            coordonnees1=StockElem[pts.identifier].cp;
+            coordonnees2=StockElem[pts.identifier].cp2;
+            coordonnes1Prime=StockElem[pts.identifier].p1_prime;
+            coordonnes2Prime=StockElem[pts.identifier].p2_prime;
             
             dx1 = coordonnees1.x - coordonnees2.x;
-            console.log("coordonnees1.x :"+coordonnees1.x);
-            console.log("coordonnees2.x :"+coordonnees2.x);
             if(dx1<0) dx1 = (-1)*dx1;
-
-            dx2 = coordonneesRelativeAParent1.x - coordonneesRelativeAParent2.x;
+            console.log("dx1 ="+dx1);
+            dx2 = coordonnes1Prime.x - coordonnes2Prime.x;
             if(dx2<0) dx2 = (-1)*dx2;
-
+            console.log("dx2 ="+dx2);
             dy1 = coordonnees1.y - coordonnees2.y;
             if(dy1<0) dy1 = (-1)*dy1;
-
-            dy2 = coordonneesRelativeAParent1.y - coordonneesRelativeAParent2.y;
+            console.log("dy1 ="+dy1);
+            dy2 = coordonnes1Prime.y - coordonnes2Prime.y;
             if(dy2<0) dy2 = (-1)*dy2;
-
+            console.log("dy2 ="+dy2);
 
             //si les points ne se confondent pas
-            if((dx1!==0) || (dy1!==0)){
+            if((dx1!==0) && (dy1!==0)){
                 console.log("1");
-                if((dx1===0)&&(dy1!=dx1)){
+                if((dx1===0)&&(dy1!=0)){
                     console.log("2");
-                    s = -dx2/dy1;
+                    s = (-dx2)/dy1;
                     c = dy2/dy1;
                     console.log("s :" +s);
                     console.log("c :"+c);
@@ -169,19 +217,21 @@ define    ( [
                 else if((dx1!=0) && (dy1!=0)){
                     console.log("4");
                     s = (dy2/dy1 - dx2/dx1) / (dy1/dx1 + dx1/dy1);
-                    c = (dy2 - s*dx1) / dy1;
+                    c = (dx2+s*dy1)/dx1;;
                     console.log("s :" +s);
                     console.log("c :"+c);
                 }
             }
             
             var M = StockElem[pts.identifier].matrice;
-            var e = coordonneesRelativeAParent1.x - c*coordonnees1.x + s*coordonnees1.y;
+            var e = coordonnes1Prime.x - c*coordonnees1.x + s*coordonnees1.y;
             console.log("e :"+e);
-            var f = coordonneesRelativeAParent1.y - s*coordonnees1.x + c*coordonnees1.y;
+            var f = coordonnes1Prime.y - s*coordonnees1.x + c*coordonnees1.y;
             console.log("f :"+f);
             
-            elem.setAttribute('transform', 'matrix('+M.a+','+M.b+','+M.c+','+M.d+','+e+','+f+')' );      
+            elem.setAttribute('transform', 'matrix('+c+','+s+','+(-s)+','+c+','+e+','+f+')' );      
         }
     }
+    
+    
 });
